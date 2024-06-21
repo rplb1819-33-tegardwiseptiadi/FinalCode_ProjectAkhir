@@ -2094,6 +2094,5 @@ def seed_data():
     ]
     db.penghuni.insert_many(user_data)
  
-if __name__ == '__main__': 
-    # seed_data()
-    app.run(debug=True)
+if __name__ == '__main__':
+    app.run('0.0.0.0', port=5000, debug=True)
