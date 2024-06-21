@@ -6,6 +6,8 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from functools import wraps 
 from flask_session import Session 
+from os.path import join, dirname
+from dotenv import load_dotenv 
  
 import os
 import pytz
@@ -18,6 +20,9 @@ import logging
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
+
+dotenv_path = join(dirname(__file__), '.env')
+load_dotenv(dotenv_path)
 
 # Blueprint digunakan untuk mengatur rute-rute 
 # yang terkait dengan halaman-halaman 
@@ -56,9 +61,14 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
  
 # Koneksi ke MongoDB
-MONGODB_CONNECTION_STRING = "mongodb+srv://tegarsultanrpl:sparta1234@cluster0.jfl6tmu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-client = MongoClient(MONGODB_CONNECTION_STRING)
-db = client.dbkontrakan
+MONGODB_URI = os.environ.get("MONGODB_URI")
+DB_NAME =  os.environ.get("DB_NAME")
+
+client = MongoClient(MONGODB_URI)
+
+db = client[DB_NAME]
+
+
 penghuni_collection = db['penghuni']
 
 # JWT configuration
