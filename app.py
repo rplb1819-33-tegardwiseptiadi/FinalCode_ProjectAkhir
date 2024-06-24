@@ -61,17 +61,17 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
  
 # Koneksi ke MongoDB
-MONGODB_URI = os.environ.get("MONGODB_URI")
-DB_NAME =  os.environ.get("DB_NAME")
-
-client = MongoClient(MONGODB_URI)
-db = client[DB_NAME]
+MONGODB_CONNECTION_STRING = "mongodb+srv://tegarsultanrpl:sparta1234@cluster0.jfl6tmu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+client = MongoClient(MONGODB_CONNECTION_STRING)
+db = client.dbkontrakan
 
 
-# MONGODB_CONNECTION_STRING = "mongodb+srv://tegarsultanrpl:sparta1234@cluster0.jfl6tmu.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-# client = MongoClient(MONGODB_CONNECTION_STRING)
-# db = client.dbkontrakan
 
+# MONGODB_URI = os.environ.get("MONGODB_URI")
+# DB_NAME =  os.environ.get("DB_NAME")
+
+# client = MongoClient(MONGODB_URI)
+# db = client[DB_NAME]
 
 
 
