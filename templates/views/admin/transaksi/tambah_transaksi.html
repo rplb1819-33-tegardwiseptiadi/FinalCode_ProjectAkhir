@@ -154,49 +154,48 @@
 <!-- footer -->
 {% include '/admin/dashboard/footer.html' %}
 
-<!-- Update kode JavaScript -->
-<script> 
-    // Update harga saat pilihan kontrakan berubah
-    document.getElementById("inputKontrakan").addEventListener("change", function() {
-      var selectedOption = this.options[this.selectedIndex];
-      var harga = selectedOption.getAttribute('data-harga');
-      document.getElementById("inputHarga").value = harga;
-      hitungTotalHarga(); // Panggil fungsi hitungTotalHarga setelah memperbarui harga
+<script>
+  // Update harga saat pilihan kontrakan berubah
+  document.getElementById("inputKontrakan").addEventListener("change", function() {
+    var selectedOption = this.options[this.selectedIndex];
+    var harga = selectedOption.getAttribute('data-harga');
+    document.getElementById("inputHarga").value = harga;
+    hitungTotalHarga(); // Panggil fungsi hitungTotalHarga setelah memperbarui harga
   });
 
   // Fungsi untuk menghitung total harga
   function hitungTotalHarga() {
-      var hargaKontrakan = parseFloat(document.getElementById("inputHarga").value);
-      var jumlahSewa = parseFloat(document.getElementById("inputJumlahSewa").value);
-      var totalHarga = hargaKontrakan * jumlahSewa;
+    var hargaKontrakan = parseFloat(document.getElementById("inputHarga").value);
+    var jumlahSewa = parseFloat(document.getElementById("inputJumlahSewa").value);
+    var totalHarga = hargaKontrakan * jumlahSewa;
 
-      // Update nilai input total harga
-      document.getElementById("inputTotalHarga").value = totalHarga;
-      hitungKembalian(); // Panggil fungsi hitungKembalian setelah memperbarui total harga
+    // Update nilai input total harga
+    document.getElementById("inputTotalHarga").value = totalHarga;
+    hitungKembalian(); // Panggil fungsi hitungKembalian setelah memperbarui total harga
   }
 
   // Fungsi untuk menghitung kembalian
   function hitungKembalian() {
-      var totalHarga = parseFloat(document.getElementById("inputTotalHarga").value);
-      var uangBayar = parseFloat(document.getElementById("inputUangBayar").value);
-      var kembalian = uangBayar - totalHarga;
+    var totalHarga = parseFloat(document.getElementById("inputTotalHarga").value);
+    var uangBayar = parseFloat(document.getElementById("inputUangBayar").value);
+    var kembalian = uangBayar - totalHarga;
 
-      // Update nilai input kembalian
-      document.getElementById("inputKembalian").value = kembalian;
-      
-      // Validasi jumlah uang bayar
-      if (!isNaN(uangBayar) && uangBayar !== 0) {
-          if (uangBayar < totalHarga) {
-              document.getElementById("uang_bayar-kurang-alert").style.display = "block";
-              document.getElementById("uang_bayar-cukup-alert").style.display = "none";
-          } else {
-              document.getElementById("uang_bayar-kurang-alert").style.display = "none";
-              document.getElementById("uang_bayar-cukup-alert").style.display = "block";
-          }
+    // Update nilai input kembalian
+    document.getElementById("inputKembalian").value = kembalian;
+    
+    // Validasi jumlah uang bayar
+    if (!isNaN(uangBayar) && uangBayar !== 0) {
+      if (uangBayar < totalHarga) {
+        document.getElementById("uang_bayar-kurang-alert").style.display = "block";
+        document.getElementById("uang_bayar-cukup-alert").style.display = "none";
       } else {
-          document.getElementById("uang_bayar-kurang-alert").style.display = "block";
-          document.getElementById("uang_bayar-cukup-alert").style.display = "none";
+        document.getElementById("uang_bayar-kurang-alert").style.display = "none";
+        document.getElementById("uang_bayar-cukup-alert").style.display = "block";
       }
+    } else {
+      document.getElementById("uang_bayar-kurang-alert").style.display = "block";
+      document.getElementById("uang_bayar-cukup-alert").style.display = "none";
+    }
   }
 
   // Event listener untuk menghitung total harga saat jumlah sewa berubah
@@ -204,8 +203,6 @@
 
   // Event listener untuk menghitung kembalian saat uang bayar berubah
   document.getElementById("inputUangBayar").addEventListener("input", hitungKembalian);
-
-
 
   // Attach validateForm function to the form's submit event
   document.getElementById("form-transaksi").addEventListener("submit", validateForm);
@@ -275,7 +272,7 @@
     }
 
     // Uang Bayar
-    if (uangBayar === "" || isNaN(uangBayar)) {
+    if (uangBayar === "" || isNaN(uangBayar) || parseFloat(uangBayar) < parseFloat(totalHarga)) {
       document.getElementById("uang_bayar-alert").style.display = "block";
       isValid = false;
     } else {
@@ -297,7 +294,6 @@
     } else {
       document.getElementById("status-alert").style.display = "none";
     }
-
 
     // Bukti Pembayaran
     if (buktiPembayaran === "") {
@@ -322,7 +318,7 @@
         text: "Data Transaksi Gagal Ditambahkan!",
         icon: "error",
         confirmButtonText: "OK",
-      });   
+      });
     }
   }
 
@@ -337,5 +333,4 @@
 
     reader.readAsDataURL(this.files[0]);
   };
-
-  </script>
+</script>

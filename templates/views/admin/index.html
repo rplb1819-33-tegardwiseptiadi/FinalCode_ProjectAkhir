@@ -30,14 +30,13 @@
                     <i class="bi bi-house"></i>
                 </div>
                 <div class="ps-3">
-                    <h6>{{ kontrakan_count }} Kontrakan</h6>
+                    <h6>{{ kontrakan_count | default(0) }} Kontrakan</h6>
                 </div>
             </div>
         </div>
     </div>
   </a>
 </div>
-
 <!-- End Kontrakan Card -->
 
 <!-- Keluhan Card -->
@@ -51,7 +50,7 @@
                   <i class="bi bi-envelope"></i>
               </div>
               <div class="ps-3">
-                  <h6>{{ keluhan_count }} Keluhan</h6>
+                  <h6>{{ keluhan_count | default(0) }} Keluhan</h6>
               </div>
           </div>
       </div>
@@ -71,7 +70,7 @@
             <i class="bi bi-currency-dollar"></i>
           </div>
           <div class="ps-3">
-            <h6>{{ transaksi_total }}</h6>
+            <h6>{{ transaksi_total | default(0) }}</h6>
           </div>
         </div>
       </div>
@@ -91,7 +90,7 @@
                     <i class="bi bi-people"></i>
                 </div>
                 <div class="ps-3">
-                    <h6>{{ penghuni_count }} Penghuni</h6>
+                    <h6>{{ penghuni_count | default(0) }} Penghuni</h6>
                 </div>
             </div>
         </div>
@@ -160,4 +159,3 @@
 
 <!-- footer -->
 {% include '/admin/dashboard/footer.html' %}
-  

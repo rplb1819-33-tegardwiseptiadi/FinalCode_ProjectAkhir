@@ -258,25 +258,25 @@ def user(email):
 #  ------------------------ START BAGIAN ADMIN  ------------------------ 
 #  ------------------------ START HOMEPAGE ------------------------ 
 
-# Define your routes 
+# Route dashboard admin
 @app.route('/admin/homepage')
 @login_required
 @role_required('admin')
 def homepage_admin():
-    penghuni_count = db.penghuni.count_documents({})
+    penghuni_count = db.penghuni.count_documents({'role': 'penghuni'})
     kontrakan_count = db.kontrakan.count_documents({})
     keluhan_count = db.keluhan.count_documents({})
 
-    transaksi_total = db.transaksi.aggregate([
+    transaksi_total_cursor = db.transaksi.aggregate([
         {
             "$group": {
                 "_id": None,
-                "total": {"$sum": "$total_harga"}
+                "total": {"$sum": "$uang_bayar"}
             }
         }
     ])
 
-    transaksi_total = next(transaksi_total)['total'] if transaksi_total else 0
+    transaksi_total = next(transaksi_total_cursor, {'total': 0})['total']
 
     jakarta_tz = pytz.timezone('Asia/Jakarta')
     now = datetime.now(jakarta_tz)
@@ -284,9 +284,8 @@ def homepage_admin():
     current_time = now.strftime('%H:%M')
 
     locale.setlocale(locale.LC_ALL, 'id_ID')
+    transaksi_total_str = locale.currency(transaksi_total, grouping=True, symbol=True)
 
-    transaksi_total_str = locale.currency(transaksi_total, grouping=True)
- 
     pipeline = [ 
         {
             '$lookup': {
@@ -300,8 +299,8 @@ def homepage_admin():
             '$addFields': {
                 'nama_penghuni': {
                     '$ifNull': [
-                        { '$arrayElemAt': ['$user_data.nama', 0] },
-                        { '$arrayElemAt': ['$penghuni_data.nama', 0] }
+                        { '$arrayElemAt': ['$penghuni_data.nama', 0] },
+                        'Tidak Diketahui'
                     ]
                 }
             }
@@ -311,11 +310,14 @@ def homepage_admin():
                 'from': 'kontrakan',
                 'localField': 'kontrakan_id',
                 'foreignField': '_id',
-                'as': 'kontrakan'
+                'as': 'kontrakan_data'
             }
         },
         {
-            '$unwind': '$kontrakan'
+            '$unwind': {
+                'path': '$kontrakan_data',
+                'preserveNullAndEmptyArrays': True
+            }
         },
         {
             '$project': {
@@ -325,28 +327,24 @@ def homepage_admin():
                 'gambar_keluhan': 1,
                 'status': 1,
                 'nama_penghuni': 1,
-                'nama_kontrakan': '$kontrakan.nama_kontrakan'
+                'nama_kontrakan': {
+                    '$ifNull': ['$kontrakan_data.nama_kontrakan', 'Tidak Diketahui']
+                }
             }
         }
     ]
 
     keluhan_list = list(db.keluhan.aggregate(pipeline))
 
-    # Print results for debugging
-    for keluhan in keluhan_list:
-        print(keluhan)
-     
-    
     return render_template('views/admin/index.html', 
-                        current_date=current_date, 
-                        current_time=current_time,
-                        data_keluhan=keluhan_list,
-                        penghuni_count=penghuni_count, 
-                        kontrakan_count=kontrakan_count,
-                        keluhan_count=keluhan_count, 
-                        transaksi_total=transaksi_total_str, 
-                        )
-
+                           current_date=current_date, 
+                           current_time=current_time,
+                           data_keluhan=keluhan_list,
+                           penghuni_count=penghuni_count, 
+                           kontrakan_count=kontrakan_count,
+                           keluhan_count=keluhan_count, 
+                           transaksi_total=transaksi_total_str)
+    
 #  ------------------------ END HOMEPAGE ------------------------ 
  
 
@@ -362,7 +360,7 @@ def update_account_admin(user_id):
 
         if not admin:
             flash(f'Admin dengan ID {user_id} tidak ditemukan', 'error')
-            return redirect(url_for('homepage_admin'))
+            return redirect(url_for('views.homepage_admin'))
 
         return render_template('/admin/setting_akun/index.html', admin=admin)
 
@@ -388,7 +386,6 @@ def update_account_admin(user_id):
             flash(f'Admin dengan ID {user_id} tidak ditemukan', 'error')
             return redirect(url_for('homepage_admin'))
 
-        flash('Akun admin berhasil diperbarui', 'success')
         return redirect(url_for('homepage_admin'))
 
 
@@ -1376,21 +1373,14 @@ def hapus_keluhan(keluhan_id):
 @login_required
 @role_required('penghuni')
 def homepage():
-    # Ambil seluruh data penghuni dari MongoDB 
     kontrakan_count = db.kontrakan.count_documents({})
-   
-    # Ambil data keluhan dari MongoDB yang statusnya "Sudah Divalidasi"
     keluhan_count = db.keluhan.count_documents({"status": "Sudah Divalidasi"})
 
-
-    # Mendapatkan user_id dari pengguna yang sedang login
     user_id = g.current_user['_id']
-    
-      # Menghitung jumlah transaksi dari akun yang login
+
     transaksi_count = db.transaksi.count_documents({"penghuni_id": user_id})
- 
-    # Mengambil total transaksi hanya untuk akun yang login
-    transaksi_total = db.transaksi.aggregate([
+
+    transaksi_total_cursor = db.transaksi.aggregate([
         {
             "$match": {
                 "penghuni_id": user_id
@@ -1399,19 +1389,16 @@ def homepage():
         {
             "$group": {
                 "_id": None,
-                "total": {"$sum": "$total_harga"}
+                "total": {"$sum": "$uang_bayar"}
             }
         }
     ])
-    transaksi_total = next(transaksi_total, {'total': 0})['total']
-
-    # Set locale sesuai dengan pengaturan lokal Anda
-    locale.setlocale(locale.LC_ALL, 'id_ID')
-
-    # Ubah nilai transaksi_total menjadi format mata uang yang diinginkan
-    transaksi_total_str = locale.currency(transaksi_total, grouping=True)
-
     
+    transaksi_total = next(transaksi_total_cursor, {'total': 0})['total']
+
+    locale.setlocale(locale.LC_ALL, 'id_ID')
+    transaksi_total_str = locale.currency(transaksi_total, grouping=True, symbol=True)
+
     pipeline = [ 
         {
             '$lookup': {
@@ -1425,8 +1412,8 @@ def homepage():
             '$addFields': {
                 'nama_penghuni': {
                     '$ifNull': [
-                        { '$arrayElemAt': ['$user_data.nama', 0] },
-                        { '$arrayElemAt': ['$penghuni_data.nama', 0] }
+                        { '$arrayElemAt': ['$penghuni_data.nama', 0] },
+                        'Tidak Diketahui'
                     ]
                 }
             }
@@ -1436,11 +1423,14 @@ def homepage():
                 'from': 'kontrakan',
                 'localField': 'kontrakan_id',
                 'foreignField': '_id',
-                'as': 'kontrakan'
+                'as': 'kontrakan_data'
             }
         },
         {
-            '$unwind': '$kontrakan'
+            '$unwind': {
+                'path': '$kontrakan_data',
+                'preserveNullAndEmptyArrays': True
+            }
         },
         {
             '$project': {
@@ -1450,13 +1440,14 @@ def homepage():
                 'gambar_keluhan': 1,
                 'status': 1,
                 'nama_penghuni': 1,
-                'nama_kontrakan': '$kontrakan.nama_kontrakan'
+                'nama_kontrakan': {
+                    '$ifNull': ['$kontrakan_data.nama_kontrakan', 'Tidak Diketahui']
+                }
             }
         }
     ]
 
     keluhan_list = list(db.keluhan.aggregate(pipeline))
-
 
     return render_template('views/penyewa/index.html', 
                            data_keluhan=keluhan_list, 
@@ -1507,9 +1498,8 @@ def update_account_penghuni(user_id):
         if penghuni_result.matched_count == 0:
             flash(f'Penghuni dengan ID {user_id} tidak ditemukan', 'error')
             return redirect(url_for('views.homepage'))
-
-        flash('Akun penghuni dan pengguna terkait berhasil diperbarui', 'success')
-        return redirect(url_for('views.update_account_penghuni', user_id=user_id))
+ 
+        return redirect(url_for('views.homepage'))
 
 # ------------------------ END UPDATE AKUN PENGHUNI ------------------------
 
@@ -2095,4 +2085,5 @@ def seed_data():
     db.penghuni.insert_many(user_data)
  
 if __name__ == '__main__':
+    # seed_data()
     app.run('0.0.0.0', port=5000, debug=True)
